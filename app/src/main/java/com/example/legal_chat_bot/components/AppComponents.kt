@@ -3,11 +3,16 @@ package com.example.legal_chat_bot.components
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
@@ -17,7 +22,6 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
-import androidx.compose.material3.BottomAppBarDefaults.containerColor
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -27,15 +31,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,8 +61,11 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.NotificationCompat.getColor
 import com.example.legal_chat_bot.R
+import androidx.compose.foundation.lazy.items
+import androidx.compose.runtime.livedata.observeAsState
+import com.example.legal_chat_bot.data.ChatViewModel
+import com.example.legal_chat_bot.network.APIData
 
 @Composable
 fun NormalTextComponent(value:String){
@@ -118,7 +125,7 @@ fun MyTextFieldInfo(labelValue:String,imageVectorRes: ImageVector, onTextSelecte
         singleLine = true,
         maxLines = 1,
         leadingIcon = {
-            androidx.compose.material3.Icon(imageVector = imageVectorRes , contentDescription = "")
+            Icon(imageVector = imageVectorRes , contentDescription = "")
         },
         isError = !onErrorStatus,
         onValueChange = {
@@ -376,6 +383,102 @@ fun AppToolBar(toolBarTitle:String, logOutButtonClicked:()->Unit){
     )
 }
 
+@Composable
+fun APICallButtonComponent(value: String, onButtonClicked : () -> Unit, isEnabled : Boolean = false){
+    Button(onClick = { onButtonClicked.invoke() },
+        colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.colorSecondary)),
+        enabled = isEnabled
+    ) {
 
+        Text(text = value,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+    }
+}
+@Composable
+fun ChatScreen(viewModel: ChatViewModel) {
+    //response from api
+    var messages by remember { mutableStateOf(listOf<String>()) }
+    val messageInput by remember { mutableStateOf("") }
+    //inputText is userInput
+    var inputText by remember { mutableStateOf("") }
+    val apiResponse by viewModel.apiResponse.observeAsState()
 
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            reverseLayout = true,
+            contentPadding = PaddingValues(vertical = 8.dp)
+        ) {
+            items(messages.reversed()) { message ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Text(
+                        text = message,
+                        style = TextStyle(
+                            fontSize = 18.sp,
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Normal,
+                            fontWeight = FontWeight.Normal
+
+                        ),
+                        modifier = Modifier
+                            .background(
+                                color = Color.White,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(12.dp)
+                    )
+                }
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = colorResource(id = R.color.colorSecondary),
+                    focusedLabelColor = colorResource(id = R.color.colorSecondary),
+                    cursorColor = colorResource(id = R.color.colorSecondary),
+                    focusedContainerColor = colorResource(id = R.color.white),
+                    unfocusedContainerColor = colorResource(id = R.color.colorGray),
+                ),
+                value = inputText,
+                onValueChange = { inputText = it },
+                modifier = Modifier.weight(1f),
+                placeholder = { Text("Type your message...") }
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            APICallButtonComponent(value = "Send", onButtonClicked = {
+                if (inputText.isNotBlank()) {
+                    viewModel.sendMessage(inputText, APIData(messageInput))
+//                    apiResponse?.let { response ->
+//                        response.forEach { apiResult ->
+//                            messageInput = apiResult.generatedText.toString()
+//                            messages = messages + messageInput
+//                        }
+//                    }
+                    inputText = ""
+                }
+            }, isEnabled = inputText.isNotBlank())
+            apiResponse?.let { response ->
+                response.forEach { apiResult ->
+//                    Text(apiResult.generatedText ?: "No text generated")
+                    messages = listOf(apiResult.generatedText.toString())
+                }
+            }
+        }
+    }
+}
 

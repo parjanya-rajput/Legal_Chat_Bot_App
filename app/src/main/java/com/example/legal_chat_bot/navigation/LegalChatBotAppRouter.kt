@@ -13,7 +13,7 @@ sealed class Screen(){
 }
 object LegalChatBotAppRouter {
 
-    val currentScreen : MutableState<Screen> = mutableStateOf(Screen.LoginScreen)
+    val currentScreen : MutableState<Screen> = mutableStateOf(Screen.HomeScreen)
 
     fun navigateTo(destination: Screen){
         currentScreen.value = destination
