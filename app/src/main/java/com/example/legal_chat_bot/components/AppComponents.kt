@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -63,6 +64,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.legal_chat_bot.R
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
+//import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.livedata.observeAsState
 import com.example.legal_chat_bot.data.ChatViewModel
 import com.example.legal_chat_bot.network.APIData
@@ -405,6 +408,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
     //inputText is userInput
     var inputText by remember { mutableStateOf("") }
     val apiResponse by viewModel.apiResponse.observeAsState()
+    val isLoading by viewModel.isLoading.observeAsState()
 
     Column(
         modifier = Modifier
@@ -423,6 +427,14 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         .padding(8.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
+                    if(isLoading == true){
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .width(20.dp)
+                                .height(20.dp)
+                                .align(Alignment.CenterStart)
+                        )
+                    }
                     Text(
                         text = message,
                         style = TextStyle(
@@ -441,7 +453,24 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 }
             }
         }
+        if (isLoading == true) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                contentAlignment = Alignment.BottomStart
+            ) {
 
+                CircularProgressIndicator(
+                    color = colorResource(id = R.color.black),
+                )
+            }
+        } else {
+            apiResponse?.let { response ->
+                messages = listOf(response.generatedText.toString())
+            }
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -463,22 +492,11 @@ fun ChatScreen(viewModel: ChatViewModel) {
             APICallButtonComponent(value = "Send", onButtonClicked = {
                 if (inputText.isNotBlank()) {
                     viewModel.sendMessage(inputText, APIData(messageInput))
-//                    apiResponse?.let { response ->
-//                        response.forEach { apiResult ->
-//                            messageInput = apiResult.generatedText.toString()
-//                            messages = messages + messageInput
-//                        }
-//                    }
                     inputText = ""
                 }
             }, isEnabled = inputText.isNotBlank())
-            apiResponse?.let { response ->
-                response.forEach { apiResult ->
-//                    Text(apiResult.generatedText ?: "No text generated")
-                    messages = listOf(apiResult.generatedText.toString())
-                }
-            }
         }
     }
 }
+
 

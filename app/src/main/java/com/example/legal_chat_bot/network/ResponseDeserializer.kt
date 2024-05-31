@@ -56,7 +56,7 @@ class ResponseDeserializer : JsonDeserializer<List<APIData>> {
 
     private fun parseAPIData(jsonObject: JsonObject): APIData {
         val apiData = APIData()
-        apiData.generatedText = jsonObject.get("generated_text").asString
+        apiData.generatedText = jsonObject.get("response").asString
         return apiData
     }
 }

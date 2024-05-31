@@ -15,60 +15,70 @@ import retrofit2.Response
 
 class ChatViewModel: ViewModel() {
 
-//    private val _apiResponse = MutableLiveData<APIData>()
-//    val apiResponse: LiveData<APIData> get() = _apiResponse
+    private val _apiResponse = MutableLiveData<APIData>()
+    val apiResponse: LiveData<APIData> get() = _apiResponse
 
-    private val _apiResponse = MutableLiveData<List<APIData>>()
-    val apiResponse: LiveData<List<APIData>> get() = _apiResponse
+//    private val _apiResponse = MutableLiveData<List<APIData>>()
+//    val apiResponse: LiveData<List<APIData>> get() = _apiResponse
+
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> get() = _isLoading
+    val failureMessage = MutableLiveData<String>()
+
+    fun sendMessage(userInput: String, apiData: APIData) {
+        _isLoading.postValue(true)
+        viewModelScope.launch(Dispatchers.IO) {
+            val your_query = userInput
+            RetroFitInstance.apiInterface.sendMessage(your_query).enqueue(object : Callback<APIData> {
+
+                    override fun onResponse(
+
+                        call: Call<APIData>,
+                        response: Response<APIData>
+                    ) {
+                        _isLoading.postValue(false)
+                        if (response.isSuccessful) {
+                            _apiResponse.postValue(response.body())
+//                            println(response.body())
+                        }else {
+                            Log.e("API Error", "Error: ${response.errorBody()?.string()}")
+                            failureMessage.postValue(response.errorBody()?.string())
+                        }
+                    }
+
+                override fun onFailure(call: Call<APIData>, t: Throwable) {
+                    _isLoading.postValue(false)
+                    Log.e("API Failure", "Failure: ${t.message}")
+                    failureMessage.postValue(t.message)
+                }
+            })
+        }
+    }
+
 
 //    fun sendMessage(userInput: String, apiData: APIData) {
 //        viewModelScope.launch(Dispatchers.IO) {
 //            val url = "query?q=$userInput"
-//            RetroFitInstance.apiInterface.sendMessage(url, apiData).enqueue(object : Callback<APIData> {
+//            RetroFitInstance.apiInterface.sendMessage(url, apiData).enqueue(object : Callback<List<APIData>> {
 //
-//                    override fun onResponse(
-//                        call: Call<APIData>,
-//                        response: Response<APIData>
-//                    ) {
-//                        if (response.isSuccessful) {
-//                            _apiResponse.postValue(response.body())
-////                            println(response.body())
-//                        }else {
-//                            Log.e("API Error", "Error: ${response.errorBody()?.string()}")
-//                        }
+//                override fun onResponse(
+//                    call: Call<List<APIData>>,
+//                    response: Response<List<APIData>>
+//                ) {
+//                    if (response.isSuccessful) {
+//                        _apiResponse.postValue(response.body())
+////                        println(response.body())
+//                    }else {
+//                        Log.e("API Error", "Error: ${response.errorBody()?.string()}")
 //                    }
+//                }
 //
-//                override fun onFailure(call: Call<APIData>, t: Throwable) {
+//                override fun onFailure(call: Call<List<APIData>>, t: Throwable) {
 //                    Log.e("API Failure", "Failure: ${t.message}")
 //                }
 //            })
 //        }
 //    }
-
-
-    fun sendMessage(userInput: String, apiData: APIData) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val url = "query?q=$userInput"
-            RetroFitInstance.apiInterface.sendMessage(url, apiData).enqueue(object : Callback<List<APIData>> {
-
-                override fun onResponse(
-                    call: Call<List<APIData>>,
-                    response: Response<List<APIData>>
-                ) {
-                    if (response.isSuccessful) {
-                        _apiResponse.postValue(response.body())
-                        println(response.body())
-                    }else {
-                        Log.e("API Error", "Error: ${response.errorBody()?.string()}")
-                    }
-                }
-
-                override fun onFailure(call: Call<List<APIData>>, t: Throwable) {
-                    Log.e("API Failure", "Failure: ${t.message}")
-                }
-            })
-        }
-    }
 
 //    fun sendReqToModel() {
 //        RetroFitInstance.apiInterface.getResponse().enqueue(object : Callback<List<APIData>>{

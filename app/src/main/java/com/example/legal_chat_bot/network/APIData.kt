@@ -4,5 +4,5 @@ import com.google.gson.annotations.SerializedName
 import java.io.Serializable
 
 data class APIData(
-    @SerializedName("generated_text") var generatedText: String? = null
+    @SerializedName("response") var generatedText: String? = null
 ) : Serializable
